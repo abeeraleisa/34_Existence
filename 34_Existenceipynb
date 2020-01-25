@@ -1,0 +1,1093 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "accelerator": "GPU",
+    "colab": {
+      "name": "Copy of style_transfer.ipynb",
+      "provenance": [],
+      "private_outputs": true,
+      "collapsed_sections": []
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "g_nWetWWd_ns"
+      },
+      "source": [
+        "##### Copyright 2018 The TensorFlow Authors."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "cellView": "form",
+        "colab_type": "code",
+        "id": "2pHVBk_seED1",
+        "colab": {}
+      },
+      "source": [
+        "#@title Licensed under the Apache License, Version 2.0 (the \"License\");\n",
+        "# you may not use this file except in compliance with the License.\n",
+        "# You may obtain a copy of the License at\n",
+        "#\n",
+        "# https://www.apache.org/licenses/LICENSE-2.0\n",
+        "#\n",
+        "# Unless required by applicable law or agreed to in writing, software\n",
+        "# distributed under the License is distributed on an \"AS IS\" BASIS,\n",
+        "# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n",
+        "# See the License for the specific language governing permissions and\n",
+        "# limitations under the License."
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "6msVLevwcRhm"
+      },
+      "source": [
+        "# Neural style transfer"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "Ds4o1h4WHz9U"
+      },
+      "source": [
+        "<table class=\"tfo-notebook-buttons\" align=\"left\">\n",
+        "  <td>\n",
+        "    <a target=\"_blank\" href=\"https://www.tensorflow.org/tutorials/generative/style_transfer\"><img src=\"https://www.tensorflow.org/images/tf_logo_32px.png\" />View on TensorFlow.org</a>\n",
+        "  </td>\n",
+        "  <td>\n",
+        "    <a target=\"_blank\" href=\"https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/generative/style_transfer.ipynb\"><img src=\"https://www.tensorflow.org/images/colab_logo_32px.png\" />Run in Google Colab</a>\n",
+        "  </td>\n",
+        "  <td>\n",
+        "    <a target=\"_blank\" href=\"https://github.com/tensorflow/docs/blob/master/site/en/tutorials/generative/style_transfer.ipynb\"><img src=\"https://www.tensorflow.org/images/GitHub-Mark-32px.png\" />View source on GitHub</a>\n",
+        "  </td>\n",
+        "  <td>\n",
+        "    <a href=\"https://storage.googleapis.com/tensorflow_docs/docs/site/en/tutorials/generative/style_transfer.ipynb\"><img src=\"https://www.tensorflow.org/images/download_logo_32px.png\" />Download notebook</a>\n",
+        "  </td>\n",
+        "</table>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "eqxUicSPUOP6"
+      },
+      "source": [
+        "### Import and configure modules"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "2Mdpou0qzCm6",
+        "colab": {}
+      },
+      "source": [
+        "from __future__ import absolute_import, division, print_function, unicode_literals"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "mCluXR52x-YM",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "pip install paralleldots"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "3Nkr9DU-x-zt",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "import paralleldots\n"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "7rAG49ikx-7g",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "paralleldots.set_api_key( \"SxR5pkLKgDuXTFVcYlrXjUEuMGriklijrd9PVUfkK0A\" )\n",
+        "paralleldots.get_api_key()\n"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "G0Om3DkLx-_z",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "!git clone https://github.com/ParallelDots/ParallelDots-Python-API.git"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "1dBw7kIrx_GQ",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "text=\"`WE won the AI Artathon! We are on top of the world! \"\n",
+        "response=paralleldots.emotion(text)\n",
+        "print(response)\n"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "YJ544ySvx_Jj",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "import numpy as np\n",
+        "a = np.array([response['emotion']['Excited'], response['emotion']['Angry'] ,response['emotion']['Sad'] ,response['emotion']['Happy'] ,response['emotion']['Bored'] , response['emotion']['Fear']])\n"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "fRcfNZwox_W8",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "words=[\"Excited\",\"Angry\",\"Sad\",\"Happy\",\"Bored\",\"Fear\"]"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "p3k_kH0cx_Dm",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "max= a[0]\n",
+        "j=0\n",
+        "for i in range (5):\n",
+        "    if(a[i]> max):\n",
+        "        max=a[i]\n",
+        "        j=i\n",
+        "        "
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "QICOPc8XyU9_",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "key_word= words[j]"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "E34w5eAGyVBS",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "key_word"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "NyftRTSMuwue",
+        "colab": {}
+      },
+      "source": [
+        "try:\n",
+        "  # %tensorflow_version only exists in Colab.\n",
+        "  %tensorflow_version 2.x\n",
+        "except Exception:\n",
+        "  pass\n",
+        "import tensorflow as tf"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "sc1OLbOWhPCO",
+        "colab": {}
+      },
+      "source": [
+        "import IPython.display as display\n",
+        "\n",
+        "import matplotlib.pyplot as plt\n",
+        "import matplotlib as mpl\n",
+        "mpl.rcParams['figure.figsize'] = (12,12)\n",
+        "mpl.rcParams['axes.grid'] = False\n",
+        "\n",
+        "import numpy as np\n",
+        "import PIL.Image\n",
+        "import time\n",
+        "import functools"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "GM6VEGrGLh62",
+        "colab": {}
+      },
+      "source": [
+        "def tensor_to_image(tensor):\n",
+        "  tensor = tensor*255\n",
+        "  tensor = np.array(tensor, dtype=np.uint8)\n",
+        "  if np.ndim(tensor)>3:\n",
+        "    assert tensor.shape[0] == 1\n",
+        "    tensor = tensor[0]\n",
+        "  return PIL.Image.fromarray(tensor)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "wqc0OJHwyFAk",
+        "colab": {}
+      },
+      "source": [
+        "\n",
+        "  \n",
+        "from PIL import Image \n",
+        "try:\n",
+        "\n",
+        "  img_1 = np.array(Image.open(\"/Earth_Eastern_Hemisphere.jpg\"))\n",
+        "  img_2 = np.array(Image.open(\"/5-1-1.jpg\")  )\n",
+        "  \n",
+        "\n",
+        "          \n",
+        "except IOError: \n",
+        "  print(\"S\")\n",
+        "  pass\n",
+        "\n",
+        "\n",
+        "\n",
+        "feeling = \"Happy\"\n",
+        "if feeling == \"Happy\":\n",
+        "  img_2 = np.array(Image.open(\"/5-1-1.jpg\")  )\n",
+        "if feeling == \"sad\":\n",
+        "  img_2 = np.array(Image.open(\"/5-1.jpg\")  )\n",
+        "if feeling ==\"mad\":\n",
+        "  img_2 = np.array(Image.open(\"/3-11-1.jpg\")  )\n",
+        "if feeling ==\"saddd\":\n",
+        "  img_2 = np.array(Image.open(\"/yel.jpg\")  )\n",
+        "\n",
+        "\n",
+        "  \n",
+        "\n",
+        "#Image.size gives a 2-tuple and thd\n",
+        "content_path = tf.keras.utils.get_file('YellowLabradorLooking_new.jpg', 'https://storage.googleapis.com/download.tensorflow.org/example_images/YellowLabradorLooking_new.jpg')\n",
+        "\n",
+        "# https://commons.wikimedia.org/wiki/File:Vassily_Kandinsky,_1913_-_Composition_7.jpg\n",
+        "style_path = tf.keras.utils.get_file('kandinsky5.jpg','https://storage.googleapis.com/download.tensorflow.org/example_images/Vassily_Kandinsky%2C_1913_-_Composition_7.jpg')\n"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "xE4Yt8nArTeR"
+      },
+      "source": [
+        "## Visualize the input"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "klh6ObK2t_vH"
+      },
+      "source": [
+        "Define a function to load an image and limit its maximum dimension to 512 pixels."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "3TLljcwv5qZs",
+        "colab": {}
+      },
+      "source": [
+        "def load_img(path_to_img):\n",
+        "  max_dim = 512\n",
+        "  img = tf.io.read_file(path_to_img)\n",
+        "  img = tf.image.decode_image(img, channels=3)\n",
+        "  img = tf.image.convert_image_dtype(img, tf.float32)\n",
+        "\n",
+        "  shape = tf.cast(tf.shape(img)[:-1], tf.float32)\n",
+        "  long_dim = max(shape)\n",
+        "  scale = max_dim / long_dim\n",
+        "\n",
+        "  new_shape = tf.cast(shape * scale, tf.int32)\n",
+        "\n",
+        "  img = tf.image.resize(img, new_shape)\n",
+        "  img = img[tf.newaxis, :]\n",
+        "  return img"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "2yAlRzJZrWM3"
+      },
+      "source": [
+        "Create a simple function to display an image:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "cBX-eNT8PAK_",
+        "colab": {}
+      },
+      "source": [
+        "def imshow(image, title=None):\n",
+        "  if len(image.shape) > 3:\n",
+        "    image = tf.squeeze(image, axis=0)\n",
+        "\n",
+        "  plt.imshow(image)\n",
+        "  if title:\n",
+        "    plt.title(title)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "YMzChXSlKTA2"
+      },
+      "source": [
+        "## Fast Style Transfer using TF-Hub\n",
+        "\n",
+        "This tutorial demonstrates the original style-transfer algorithm. Which optimizes the image content to a particular style. Before getting into the details let's see how the [TensorFlow Hub](https://tensorflow.org/hub) module does:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "zl98aj3cWexH",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "\n",
+        "\n",
+        "plt.subplot(1, 2, 2)\n",
+        "imshow(img_2, 'Style Image') \n",
+        "\n",
+        "plt.subplot(1, 2, 1)\n",
+        "imshow(img_1, 'Content Image')\n"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "iYSLexgRKSh-",
+        "colab": {}
+      },
+      "source": [
+        "import tensorflow_hub as hub\n",
+        "hub_module = hub.load('https://tfhub.dev/google/magenta/arbitrary-image-stylization-v1-256/1')\n",
+        "stylized_image = hub_module(tf.constant(np.array(img_2[None,...],dtype=np.float32)), tf.constant(np.array(img_1[None,...],dtype=np.float32)))[0]\n",
+        "tensor_to_image(stylized_image)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "vYxLeFJlxbpU",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "import os\n",
+        "import glob\n",
+        "\n",
+        "from PIL import Image, ImageDraw, ImageFilter\n",
+        "\n",
+        "stylized_image\n",
+        "thumb_width = 150"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "M1YQy6la0ccZ",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "stylized_image"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "1P5YAz0Wynig",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "def crop_center(pil_img, crop_width, crop_height):\n",
+        "    img_width, img_height = pil_img.size\n",
+        "    return pil_img.crop(((img_width - crop_width) // 2,\n",
+        "                         (img_height - crop_height) // 2,\n",
+        "                         (img_width + crop_width) // 2,\n",
+        "                         (img_height + crop_height) // 2))"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "EhdQ6gSNzEDO",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "stylized_image=np.array(stylized_image)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "lb_JWyo8zk43",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "#import imageio\n",
+        "#imageio.imwrite('filename.jpg', stylized_image)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "GEwZ7FlwrjoZ"
+      },
+      "source": [
+        "## Define content and style representations\n",
+        "\n",
+        "Use the intermediate layers of the model to get the *content* and *style* representations of the image. Starting from the network's input layer, the first few layer activations represent low-level features like edges and textures. As you step through the network, the final few layers represent higher-level features—object parts like *wheels* or *eyes*. In this case, you are using the VGG19 network architecture, a pretrained image classification network. These intermediate layers are necessary to define the representation of content and style from the images. For an input image, try to match the corresponding style and content target representations at these intermediate layers.\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "LP_7zrziuiJk"
+      },
+      "source": [
+        "Load a [VGG19](https://keras.io/applications/#vgg19) and test run it on our image to ensure it's used correctly:"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "2o4nSwuN0U3X"
+      },
+      "source": [
+        "#### Intermediate layers for style and content\n",
+        "\n",
+        "So why do these intermediate outputs within our pretrained image classification network allow us to define style and content representations?\n",
+        "\n",
+        "At a high level, in order for a network to perform image classification (which this network has been trained to do), it must understand the image. This requires taking the raw image as input pixels and building an internal representation that converts the raw image pixels into a complex understanding of the features present within the image.\n",
+        "\n",
+        "This is also a reason why convolutional neural networks are able to generalize well: they’re able to capture the invariances and defining features within classes (e.g. cats vs. dogs) that are agnostic to background noise and other nuisances. Thus, somewhere between where the raw image is fed into the model and the output classification label, the model serves as a complex feature extractor. By accessing intermediate layers of the model, you're able to describe the content and style of input images."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "Jt3i3RRrJiOX"
+      },
+      "source": [
+        "## Build the model \n",
+        "\n",
+        "The networks in `tf.keras.applications` are designed so you can easily extract the intermediate layer values using the Keras functional API.\n",
+        "\n",
+        "To define a model using the functional API, specify the inputs and outputs:\n",
+        "\n",
+        "`model = Model(inputs, outputs)`\n",
+        "\n",
+        "This following function builds a VGG19 model that returns a list of intermediate layer outputs:"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "y9r8Lyjb_m0u"
+      },
+      "source": [
+        "## Run gradient descent\n",
+        "\n",
+        "With this style and content extractor, you can now implement the style transfer algorithm. Do this by calculating the mean square error for your image's output relative to each target, then take the weighted sum of these losses.\n",
+        "\n",
+        "Set your style and content target values:"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "9YrTig5p_Ge7"
+      },
+      "source": [
+        "Create an optimizer. The paper recommends LBFGS, but `Adam` works okay, too:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "iEy5NDCp_FMI",
+        "colab": {}
+      },
+      "source": [
+        "opt = tf.optimizers.Adam(learning_rate=0.02, beta_1=0.99, epsilon=1e-1)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "KOzV6N_3_Ea-"
+      },
+      "source": [
+        "To optimize this, use a weighted combination of the two losses to get the total loss:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "iuMvOupw_C8r",
+        "colab": {}
+      },
+      "source": [
+        "style_weight=1e-2\n",
+        "content_weight=1e4"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "D1QitIim_CSW",
+        "colab": {}
+      },
+      "source": [
+        "def style_content_loss(outputs):\n",
+        "    style_outputs = outputs['style']\n",
+        "    content_outputs = outputs['content']\n",
+        "    style_loss = tf.add_n([tf.reduce_mean((style_outputs[name]-style_targets[name])**2) \n",
+        "                           for name in style_outputs.keys()])\n",
+        "    style_loss *= style_weight / num_style_layers\n",
+        "\n",
+        "    content_loss = tf.add_n([tf.reduce_mean((content_outputs[name]-content_targets[name])**2) \n",
+        "                             for name in content_outputs.keys()])\n",
+        "    content_loss *= content_weight / num_content_layers\n",
+        "    loss = style_loss + content_loss\n",
+        "    return loss"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "wOW8ZWNv_BQp"
+      },
+      "source": [
+        "Use `tf.GradientTape` to update the image."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "0t0umkajFIuh",
+        "colab": {}
+      },
+      "source": [
+        "@tf.function()\n",
+        "def train_step(image):\n",
+        "  with tf.GradientTape() as tape:\n",
+        "    outputs = extractor(image)\n",
+        "    loss = style_content_loss(outputs)\n",
+        "\n",
+        "  grad = tape.gradient(loss, image)\n",
+        "  opt.apply_gradients([(grad, image)])\n",
+        "  image.assign(clip_0_1(image))"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "5FHMJq4UBRIQ"
+      },
+      "source": [
+        "Now run a few steps to test:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "Y542mxi-O2a2",
+        "colab": {}
+      },
+      "source": [
+        "#train_step(image)\n",
+        "#train_step(image)\n",
+        "#train_step(image)\n",
+        "t#ensor_to_image(image)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "mNzE-mTbBVgY"
+      },
+      "source": [
+        "Since it's working, perform a longer optimization:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "rQW1tXYoLbUS",
+        "colab": {}
+      },
+      "source": [
+        "'''import time\n",
+        "start = time.time()\n",
+        "\n",
+        "epochs = 10\n",
+        "steps_per_epoch = 100\n",
+        "\n",
+        "step = 0\n",
+        "for n in range(epochs):\n",
+        "  for m in range(steps_per_epoch):\n",
+        "    step += 1\n",
+        "    train_step(image)\n",
+        "    print(\".\", end='')\n",
+        "  display.clear_output(wait=True)\n",
+        "  display.display(tensor_to_image(image))\n",
+        "  print(\"Train step: {}\".format(step))\n",
+        "  \n",
+        "end = time.time()\n",
+        "print(\"Total time: {:.1f}\".format(end-start))'''"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "GWVB3anJMY2v"
+      },
+      "source": [
+        "## Total variation loss\n",
+        "\n",
+        "One downside to this basic implementation is that it produces a lot of high frequency artifacts. Decrease these using an explicit regularization term on the high frequency components of the image. In style transfer, this is often called the *total variation loss*:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "7szUUybCQMB3",
+        "colab": {}
+      },
+      "source": [
+        "def high_pass_x_y(image):\n",
+        "  x_var = image[:,:,1:,:] - image[:,:,:-1,:]\n",
+        "  y_var = image[:,1:,:,:] - image[:,:-1,:,:]\n",
+        "\n",
+        "  return x_var, y_var"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "Atc2oL29PXu_",
+        "colab": {}
+      },
+      "source": [
+        "'''x_deltas, y_deltas = high_pass_x_y(content_image)\n",
+        "\n",
+        "plt.figure(figsize=(14,10))\n",
+        "plt.subplot(2,2,1)\n",
+        "imshow(clip_0_1(2*y_deltas+0.5), \"Horizontal Deltas: Original\")\n",
+        "\n",
+        "plt.subplot(2,2,2)\n",
+        "imshow(clip_0_1(2*x_deltas+0.5), \"Vertical Deltas: Original\")\n",
+        "\n",
+        "x_deltas, y_deltas = high_pass_x_y(image)\n",
+        "\n",
+        "plt.subplot(2,2,3)\n",
+        "imshow(clip_0_1(2*y_deltas+0.5), \"Horizontal Deltas: Styled\")\n",
+        "\n",
+        "plt.subplot(2,2,4)\n",
+        "imshow(clip_0_1(2*x_deltas+0.5), \"Vertical Deltas: Styled\")'''"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "lqHElVgBkgkz"
+      },
+      "source": [
+        "This shows how the high frequency components have increased.\n",
+        "\n",
+        "Also, this high frequency component is basically an edge-detector. You can get similar output from the Sobel edge detector, for example:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "HyvqCiywiUfL",
+        "colab": {}
+      },
+      "source": [
+        "'''plt.figure(figsize=(14,10))\n",
+        "\n",
+        "sobel = tf.image.sobel_edges(content_image)\n",
+        "plt.subplot(1,2,1)\n",
+        "imshow(clip_0_1(sobel[...,0]/4+0.5), \"Horizontal Sobel-edges\")\n",
+        "plt.subplot(1,2,2)\n",
+        "imshow(clip_0_1(sobel[...,1]/4+0.5), \"Vertical Sobel-edges\")'''"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "vv5bKlSDnPP7"
+      },
+      "source": [
+        "The regularization loss associated with this is the sum of the squares of the values:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "mP-92lXMIYPn",
+        "colab": {}
+      },
+      "source": [
+        "def total_variation_loss(image):\n",
+        "  x_deltas, y_deltas = high_pass_x_y(image)\n",
+        "  return tf.reduce_sum(tf.abs(x_deltas)) + tf.reduce_sum(tf.abs(y_deltas))"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "s4OYBUX2KQ25",
+        "colab": {}
+      },
+      "source": [
+        "#total_variation_loss(image).numpy()"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "pu2hJ8zOKMc1"
+      },
+      "source": [
+        "That demonstrated what it does. But there's no need to implement it yourself, TensorFlow includes a standard implementation:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "YQjWW04NKLfJ",
+        "colab": {}
+      },
+      "source": [
+        "#tf.image.total_variation(image).numpy()"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "nTessd-DCdcC"
+      },
+      "source": [
+        "## Re-run the optimization\n",
+        "\n",
+        "Choose a weight for the `total_variation_loss`:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "tGeRLD4GoAd4",
+        "colab": {}
+      },
+      "source": [
+        "#total_variation_weight=30"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "kG1-T4kJsoAv"
+      },
+      "source": [
+        "Now include it in the `train_step` function:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "BzmfcyyYUyWq",
+        "colab": {}
+      },
+      "source": [
+        "@tf.function()\n",
+        "def train_step(image):\n",
+        "  with tf.GradientTape() as tape:\n",
+        "    outputs = extractor(image)\n",
+        "    loss = style_content_loss(outputs)\n",
+        "    loss += total_variation_weight*tf.image.total_variation(image)\n",
+        "\n",
+        "  grad = tape.gradient(loss, image)\n",
+        "  opt.apply_gradients([(grad, image)])\n",
+        "  image.assign(clip_0_1(image))"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "lcLWBQChsutQ"
+      },
+      "source": [
+        "Reinitialize the optimization variable:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "a-dPRr8BqexB",
+        "colab": {}
+      },
+      "source": [
+        "#image = tf.Variable(content_image)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "BEflRstmtGBu"
+      },
+      "source": [
+        "And run the optimization:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "q3Cc3bLtoOWy",
+        "colab": {}
+      },
+      "source": [
+        "'''import time\n",
+        "start = time.time()\n",
+        "\n",
+        "epochs = 10\n",
+        "steps_per_epoch = 100\n",
+        "\n",
+        "step = 0\n",
+        "for n in range(epochs):\n",
+        "  for m in range(steps_per_epoch):\n",
+        "    step += 1\n",
+        "    train_step(image)\n",
+        "    print(\".\", end='')\n",
+        "  display.clear_output(wait=True)\n",
+        "  display.display(tensor_to_image(image))\n",
+        "  print(\"Train step: {}\".format(step))\n",
+        "\n",
+        "end = time.time()\n",
+        "print(\"Total time: {:.1f}\".format(end-start))'''"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "colab_type": "text",
+        "id": "KKox7K46tKxy"
+      },
+      "source": [
+        "Finally, save the result:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab_type": "code",
+        "id": "SSH6OpyyQn7w",
+        "colab": {}
+      },
+      "source": [
+        "'''file_name = 'stylized-image.png'\n",
+        "tensor_to_image(image).save(file_name)\n",
+        "\n",
+        "try:\n",
+        "  from google.colab import files\n",
+        "except ImportError:\n",
+        "   pass\n",
+        "else:\n",
+        "  files.download(file_name)'''"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    }
+  ]
+}
